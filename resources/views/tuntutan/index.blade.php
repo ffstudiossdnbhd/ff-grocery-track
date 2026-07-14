@@ -62,14 +62,16 @@
                 <tbody>
                     @foreach($claims as $claim)
                     <tr>
-                        <td>
-                            <strong>{{ $claim->user->name }}</strong>
-                            <div style="font-size: 0.75rem; color: var(--text-dark);">{{ $claim->user->email }}</div>
+                        <td data-label="Pencadang">
+                            <div class="table-item-info">
+                                <strong>{{ $claim->user->name }}</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-dark);">{{ $claim->user->email }}</div>
+                            </div>
                         </td>
-                        <td>{{ $claim->nama_item }}</td>
-                        <td>{{ $claim->tarikh_beli->format('d/m/Y') }}</td>
-                        <td><strong>RM {{ number_format($claim->nilai_tuntutan, 2) }}</strong></td>
-                        <td>
+                        <td data-label="Barang Pembelian">{{ $claim->nama_item }}</td>
+                        <td data-label="Tarikh Beli">{{ $claim->tarikh_beli->format('d/m/Y') }}</td>
+                        <td data-label="Nilai Tuntutan"><strong>RM {{ number_format($claim->nilai_tuntutan, 2) }}</strong></td>
+                        <td data-label="Status">
                             @if($claim->status === 'Selesai')
                                 <span class="badge badge-success">Selesai (Dibayar)</span>
                             @elseif($claim->status === 'Ditolak')
@@ -79,7 +81,7 @@
                             @endif
                         </td>
                         @role('Superadmin')
-                        <td style="text-align: right;">
+                        <td data-label="Tindakan Superadmin" style="text-align: right;">
                             @if($claim->status === 'Dalam Proses')
                             <div style="display: inline-flex; gap: 8px;">
                                 <form action="{{ route('tuntutan.status', $claim->id) }}" method="POST" style="display:inline;">

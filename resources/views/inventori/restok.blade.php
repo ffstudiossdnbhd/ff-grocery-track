@@ -33,10 +33,10 @@
             <tbody>
                 @forelse($habisStok as $item)
                 <tr>
-                    <td><strong>{{ $item->nama_item }}</strong></td>
-                    <td><span class="badge badge-primary">{{ $item->kategori }}</span></td>
-                    <td>{{ $item->had_ambang }} unit</td>
-                    <td style="text-align: right;">
+                    <td data-label="Nama Barang"><strong>{{ $item->nama_item }}</strong></td>
+                    <td data-label="Kategori"><span class="badge badge-primary">{{ $item->kategori }}</span></td>
+                    <td data-label="Had Ambang">{{ $item->had_ambang }} unit</td>
+                    <td data-label="Tindakan" style="text-align: right;">
                         <a href="{{ route('inventori.edit', $item->id) }}" class="btn btn-secondary btn-sm">
                             <i class="fa-solid fa-plus"></i> Tambah Stok
                         </a>
@@ -79,12 +79,12 @@
             <tbody>
                 @forelse($bawahAmbang as $item)
                 <tr>
-                    <td><strong>{{ $item->nama_item }}</strong></td>
-                    <td><span class="badge badge-primary">{{ $item->kategori }}</span></td>
-                    <td><span style="color: var(--color-warning); font-weight: 600;">{{ $item->jumlah_keseluruhan }}</span> unit</td>
-                    <td>{{ $item->jumlah_belum_dibuka }} unit</td>
-                    <td>{{ $item->had_ambang }} unit</td>
-                    <td style="text-align: right;">
+                    <td data-label="Nama Barang"><strong>{{ $item->nama_item }}</strong></td>
+                    <td data-label="Kategori"><span class="badge badge-primary">{{ $item->kategori }}</span></td>
+                    <td data-label="Baki Keseluruhan"><span style="color: var(--color-warning); font-weight: 600;">{{ $item->jumlah_keseluruhan }}</span> unit</td>
+                    <td data-label="Baki Belum Dibuka">{{ $item->jumlah_belum_dibuka }} unit</td>
+                    <td data-label="Had Ambang">{{ $item->had_ambang }} unit</td>
+                    <td data-label="Tindakan" style="text-align: right;">
                         <a href="{{ route('inventori.edit', $item->id) }}" class="btn btn-secondary btn-sm">
                             <i class="fa-solid fa-pen"></i> Kemaskini
                         </a>

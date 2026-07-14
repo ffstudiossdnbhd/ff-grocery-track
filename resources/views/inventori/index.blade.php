@@ -60,33 +60,37 @@
             <tbody>
                 @forelse($items as $item)
                 <tr>
-                    <td>
-                        <div style="font-weight: 600; font-size: 1rem; color: #fff;">{{ $item->nama_item }}</div>
-                        <span style="font-size: 0.75rem; color: var(--text-dark);">Dicipta: {{ $item->created_at->format('d/m/Y') }}</span>
+                    <td data-label="Nama Item">
+                        <div class="table-item-info">
+                            <div style="font-weight: 600; font-size: 1rem; color: #fff;">{{ $item->nama_item }}</div>
+                            <span style="font-size: 0.75rem; color: var(--text-dark);">Dicipta: {{ $item->created_at->format('d/m/Y') }}</span>
+                        </div>
                     </td>
-                    <td>
+                    <td data-label="Kategori">
                         <span class="badge badge-primary">{{ $item->kategori }}</span>
                     </td>
-                    <td>
+                    <td data-label="Jumlah Unit">
                         <strong style="font-size: 1.1rem; color: #fff;">{{ $item->jumlah_keseluruhan }}</strong> unit
                     </td>
-                    <td>
+                    <td data-label="Belum Dibuka">
                         @if($item->jumlah_belum_dibuka == 0 && $item->jumlah_keseluruhan > 0)
                             <span class="badge badge-danger">0 Unit (Semua Dibuka)</span>
                         @else
                             <strong style="color: #fff;">{{ $item->jumlah_belum_dibuka }}</strong> unit
                         @endif
                     </td>
-                    <td style="min-width: 150px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
-                            <span>Baki dibuka</span>
-                            <span>{{ $item->peratus_baki }}%</span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: {{ $item->peratus_baki }}%; background: {{ $item->peratus_baki <= 20 ? 'var(--color-danger)' : ($item->peratus_baki <= 50 ? 'var(--color-warning)' : 'var(--color-success)') }}"></div>
+                    <td data-label="Baki Kuantiti" style="min-width: 150px;">
+                        <div class="table-progress-wrapper">
+                            <div class="table-progress-info">
+                                <span>Baki dibuka</span>
+                                <span>{{ $item->peratus_baki }}%</span>
+                            </div>
+                            <div class="progress-bar-container" style="margin-top: 0;">
+                                <div class="progress-bar-fill" style="width: {{ $item->peratus_baki }}%; background: {{ $item->peratus_baki <= 20 ? 'var(--color-danger)' : ($item->peratus_baki <= 50 ? 'var(--color-warning)' : 'var(--color-success)') }}"></div>
+                            </div>
                         </div>
                     </td>
-                    <td>
+                    <td data-label="Tarikh Luput">
                         @if($item->jejak_luput && $item->tarikh_luput)
                             @php
                                 $daysToExpiry = now()->startOfDay()->diffInDays($item->tarikh_luput->startOfDay(), false);
@@ -102,7 +106,7 @@
                             <span style="font-size: 0.85rem; color: var(--text-dark);">Tidak dijejak</span>
                         @endif
                     </td>
-                    <td style="text-align: right;">
+                    <td data-label="Tindakan" style="text-align: right;">
                         <div style="display: inline-flex; gap: 8px;">
                             <button onclick="bukaModalPelarasan({{ json_encode($item) }})" class="btn btn-secondary btn-sm" title="Selaraskan Stok">
                                 <i class="fa-solid fa-sliders"></i>
