@@ -24,10 +24,10 @@ class DatabaseSeeder extends Seeder
 
         // Create default Superadmin user
         $superadmin = User::firstOrCreate(
-            ['email' => 'superadmin@ffgrocerytrack.com'],
+            ['email' => 'user@email.com'],
             [
                 'name' => 'Superadmin FFGrocery',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('12345678'),
             ]
         );
 

@@ -59,4 +59,23 @@ class FFGroceryTrackTest extends TestCase
         $response = $this->get('/inventori');
         $response->assertRedirect('/login');
     }
+
+    public function test_superadmin_can_create_another_superadmin(): void
+    {
+        $superadmin = User::factory()->create();
+        $superadmin->assignRole('Superadmin');
+
+        $response = $this->actingAs($superadmin)->post('/pengguna', [
+            'name' => 'New Superadmin',
+            'email' => 'newadmin@email.com',
+            'role' => 'Superadmin',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertRedirect('/pengguna');
+        $this->assertDatabaseHas('users', ['email' => 'newadmin@email.com']);
+        $newAdmin = User::where('email', 'newadmin@email.com')->first();
+        $this->assertTrue($newAdmin->hasRole('Superadmin'));
+    }
 }

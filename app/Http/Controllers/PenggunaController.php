@@ -18,9 +18,9 @@ class PenggunaController extends Controller
      */
     public function index()
     {
-        $users = User::whereDoesntHave('roles', function($q) {
-            $q->where('name', 'Superadmin');
-        })->orderBy('name', 'asc')->paginate(15);
+        $users = User::where('id', '!=', Auth::id())
+            ->orderBy('name', 'asc')
+            ->paginate(15);
 
         return view('pengguna.index', compact('users'));
     }
@@ -30,7 +30,7 @@ class PenggunaController extends Controller
      */
     public function create()
     {
-        $roles = Role::where('name', '!=', 'Superadmin')->get();
+        $roles = Role::all();
         return view('pengguna.create', compact('roles'));
     }
 
@@ -54,10 +54,7 @@ class PenggunaController extends Controller
             'role.required' => 'Sila pilih peranan pengguna.',
         ]);
 
-        // Halang penciptaan akaun Superadmin daripada form ini
-        if ($validated['role'] === 'Superadmin') {
-            abort(403, 'Anda tidak dibenarkan mencipta akaun Superadmin baharu.');
-        }
+        // Tiada halangan penciptaan Superadmin
 
         $user = User::create([
             'name' => $validated['name'],
@@ -83,12 +80,12 @@ class PenggunaController extends Controller
      */
     public function edit(User $pengguna)
     {
-        // Halang mengedit akaun Superadmin lain melalui sini
-        if ($pengguna->hasRole('Superadmin')) {
-            abort(403);
+        // Halang mengedit akaun sendiri melalui senarai ini
+        if ($pengguna->id === Auth::id()) {
+            abort(403, 'Anda tidak boleh mengedit akaun anda sendiri melalui menu ini.');
         }
 
-        $roles = Role::where('name', '!=', 'Superadmin')->get();
+        $roles = Role::all();
         return view('pengguna.edit', compact('pengguna', 'roles'));
     }
 
@@ -97,7 +94,7 @@ class PenggunaController extends Controller
      */
     public function update(Request $request, User $pengguna)
     {
-        if ($pengguna->hasRole('Superadmin')) {
+        if ($pengguna->id === Auth::id()) {
             abort(403);
         }
 
@@ -114,10 +111,6 @@ class PenggunaController extends Controller
             'password.confirmed' => 'Pengesahan kata laluan tidak sepadan.',
             'role.required' => 'Sila pilih peranan pengguna.',
         ]);
-
-        if ($validated['role'] === 'Superadmin') {
-            abort(403);
-        }
 
         $oldData = $pengguna->only(['id', 'name', 'email']);
         $oldRole = $pengguna->roles->first()?->name;
@@ -151,8 +144,8 @@ class PenggunaController extends Controller
      */
     public function destroy(User $pengguna)
     {
-        if ($pengguna->hasRole('Superadmin')) {
-            abort(403);
+        if ($pengguna->id === Auth::id()) {
+            abort(403, 'Anda tidak boleh memadam akaun anda sendiri.');
         }
 
         $oldData = $pengguna->only(['id', 'name', 'email']);
