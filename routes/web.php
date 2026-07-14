@@ -26,10 +26,12 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('inventori', InventoriController::class);
 
     // Pengurusan Tuntutan (Reimbursement)
-    Route::get('/tuntutan', [TuntutanController::class, 'index'])->name('tuntutan.index');
-    Route::get('/tuntutan/tambah', [TuntutanController::class, 'create'])->name('tuntutan.create');
-    Route::post('/tuntutan', [TuntutanController::class, 'store'])->name('tuntutan.store');
-    Route::patch('/tuntutan/{tuntutan}/status', [TuntutanController::class, 'updateStatus'])->name('tuntutan.status');
+    Route::middleware(['role:Superadmin|Stocker'])->group(function () {
+        Route::get('/tuntutan', [TuntutanController::class, 'index'])->name('tuntutan.index');
+        Route::get('/tuntutan/tambah', [TuntutanController::class, 'create'])->name('tuntutan.create');
+        Route::post('/tuntutan', [TuntutanController::class, 'store'])->name('tuntutan.store');
+        Route::patch('/tuntutan/{tuntutan}/status', [TuntutanController::class, 'updateStatus'])->name('tuntutan.status');
+    });
 
     // Laluan Khas untuk Superadmin sahaja
     Route::middleware(['role:Superadmin'])->group(function () {

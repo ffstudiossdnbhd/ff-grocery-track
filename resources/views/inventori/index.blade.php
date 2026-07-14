@@ -5,10 +5,10 @@
 @section('content')
 <div class="page-header">
     <div class="page-title">
-        <h1>Inventori Groseri</h1>
+        <h1>Inventori Barang Runcit</h1>
         <p>Uruskan baki unit dan status barangan dapur</p>
     </div>
-    @hasanyrole('Superadmin|Stocker')
+    @hasanyrole('Superadmin|Stocker|Tracker')
     <a href="{{ route('inventori.create') }}" class="btn btn-primary">
         <i class="fa-solid fa-plus"></i>
         <span>Tambah Barang</span>
@@ -110,7 +110,7 @@
                             <a href="{{ route('inventori.edit', $item->id) }}" class="btn btn-secondary btn-sm" title="Edit Barangan">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
-                            @hasanyrole('Superadmin|Stocker')
+                            @hasanyrole('Superadmin|Stocker|Tracker')
                             <form action="{{ route('inventori.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Adakah anda pasti mahu memadam item ini?')" style="display:inline;">
                                 @csrf
                                 @method('DELETE')

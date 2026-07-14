@@ -22,8 +22,19 @@
     
     <!-- FontAwesome (untuk ikon sampingan) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" style="position: fixed; inset: 0; background: rgba(11, 15, 25, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; opacity: 1; transition: opacity 0.3s ease;">
+        <div style="width: 48px; height: 48px; border: 4.5px solid rgba(99, 102, 241, 0.1); border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        <div style="font-weight: 500; letter-spacing: 0.5px; color: #94a3b8; font-size: 0.95rem;">Memuatkan...</div>
+    </div>
 
     <!-- Header Telefon Bimbit -->
     <div class="mobile-header">
@@ -56,10 +67,12 @@
                     <span>Perlu Restok</span>
                 </a>
                 
+                @hasanyrole('Superadmin|Stocker')
                 <a href="{{ route('tuntutan.index') }}" class="nav-item {{ Request::routeIs('tuntutan.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-receipt"></i>
                     <span>Tuntutan</span>
                 </a>
+                @endhasanyrole
                 
                 @role('Superadmin')
                 <a href="{{ route('pengguna.index') }}" class="nav-item {{ Request::routeIs('pengguna.*') ? 'active' : '' }}">
@@ -128,6 +141,35 @@
                     .catch(err => console.error('Pendaftaran Service Worker gagal:', err));
             });
         }
+        
+        // Pengurusan loading overlay
+        window.addEventListener('load', () => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 300);
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.style.opacity = '1';
+            }
+        });
+
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', () => {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    overlay.style.opacity = '1';
+                }
+            });
+        });
         
         // Pengurusan menu togol telefon bimbit
         const sidebarToggle = document.getElementById('sidebarToggle');

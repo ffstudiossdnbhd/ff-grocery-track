@@ -5,7 +5,7 @@
 @section('content')
 <div class="page-header">
     <div class="page-title">
-        <h1>Tuntutan Pembelian (Reimbursement)</h1>
+        <h1>Tuntutan Pembelian</h1>
         <p>Lihat dan urus tuntutan mingguan bagi pembelian barangan groseri</p>
     </div>
     @role('Stocker')
@@ -20,6 +20,16 @@
     @php
         // Kira jumlah nilai tuntutan untuk minggu ini
         $totalWeek = $claims->sum('nilai_tuntutan');
+
+        // Hitung julat tarikh untuk minggu ini
+        try {
+            $carbonWeek = \Carbon\Carbon::parse($week);
+            $startOfWeek = $carbonWeek->startOfWeek()->format('d/m/Y');
+            $endOfWeek = $carbonWeek->endOfWeek()->format('d/m/Y');
+        } catch (\Exception $e) {
+            $startOfWeek = '-';
+            $endOfWeek = '-';
+        }
     @endphp
     <div class="card" style="margin-bottom: 2rem; border: 1px solid rgba(99, 102, 241, 0.2);">
         <div class="card-header-flex" style="border-bottom-color: rgba(99, 102, 241, 0.2);">
@@ -27,7 +37,7 @@
                 <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff;">
                     Minggu: {{ $week }}
                 </h2>
-                <small style="color: var(--text-muted);">Format tahun dan nombor minggu ISO</small>
+                <small style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Tarikh: {{ $startOfWeek }} hingga {{ $endOfWeek }}</small>
             </div>
             <div style="text-align: right;">
                 <div style="font-size: 0.85rem; color: var(--text-muted);">Jumlah Tuntutan Minggu Ini</div>

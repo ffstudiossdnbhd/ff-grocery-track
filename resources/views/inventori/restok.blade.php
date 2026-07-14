@@ -59,7 +59,7 @@
     <div class="card-header-flex">
         <h2 style="color: var(--color-warning); font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
             <i class="fa-solid fa-triangle-exclamation"></i>
-            <span>Kuantiti Bawah Ambang</span>
+            <span>Kuantiti Dibawah Had</span>
         </h2>
         <span class="badge badge-warning">{{ $bawahAmbang->count() }} item</span>
     </div>

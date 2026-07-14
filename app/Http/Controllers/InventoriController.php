@@ -58,8 +58,8 @@ class InventoriController extends Controller
      */
     public function create()
     {
-        // Hanya Superadmin dan Stocker boleh tambah item baharu
-        if (!Auth::user()->hasAnyRole(['Superadmin', 'Stocker'])) {
+        // Hanya Superadmin, Stocker dan Tracker boleh tambah item baharu
+        if (!Auth::user()->hasAnyRole(['Superadmin', 'Stocker', 'Tracker'])) {
             abort(403, 'Anda tidak mempunyai kebenaran untuk menambah item.');
         }
         return view('inventori.create');
@@ -70,7 +70,7 @@ class InventoriController extends Controller
      */
     public function store(Request $request)
     {
-        if (!Auth::user()->hasAnyRole(['Superadmin', 'Stocker'])) {
+        if (!Auth::user()->hasAnyRole(['Superadmin', 'Stocker', 'Tracker'])) {
             abort(403);
         }
 
@@ -79,7 +79,7 @@ class InventoriController extends Controller
             'kategori' => 'required|string|max:255',
             'jumlah_keseluruhan' => 'required|integer|min:0',
             'jumlah_belum_dibuka' => 'required|integer|min:0|lte:jumlah_keseluruhan',
-            'peratus_baki' => 'required|integer|between:0|100',
+            'peratus_baki' => 'required|integer|between:0,100',
             'tarikh_luput' => 'nullable|date',
             'jejak_luput' => 'nullable|boolean',
             'had_ambang' => 'required|integer|min:0',
@@ -137,7 +137,7 @@ class InventoriController extends Controller
             'kategori' => 'required|string|max:255',
             'jumlah_keseluruhan' => 'required|integer|min:0',
             'jumlah_belum_dibuka' => 'required|integer|min:0|lte:jumlah_keseluruhan',
-            'peratus_baki' => 'required|integer|between:0|100',
+            'peratus_baki' => 'required|integer|between:0,100',
             'tarikh_luput' => 'nullable|date',
             'jejak_luput' => 'nullable|boolean',
             'had_ambang' => 'required|integer|min:0',
@@ -193,7 +193,7 @@ class InventoriController extends Controller
         $request->validate([
             'jumlah_keseluruhan' => 'required|integer|min:0',
             'jumlah_belum_dibuka' => 'required|integer|min:0|lte:jumlah_keseluruhan',
-            'peratus_baki' => 'required|integer|between:0|100',
+            'peratus_baki' => 'required|integer|between:0,100',
         ]);
 
         $oldData = $inventori->toArray();
@@ -235,8 +235,8 @@ class InventoriController extends Controller
      */
     public function destroy(Inventori $inventori)
     {
-        // Hanya Superadmin dan Stocker boleh padam item
-        if (!Auth::user()->hasAnyRole(['Superadmin', 'Stocker'])) {
+        // Hanya Superadmin, Stocker dan Tracker boleh padam item
+        if (!Auth::user()->hasAnyRole(['Superadmin', 'Stocker', 'Tracker'])) {
             abort(403, 'Anda tidak mempunyai kebenaran untuk memadam item.');
         }
 

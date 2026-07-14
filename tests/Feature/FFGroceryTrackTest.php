@@ -78,4 +78,38 @@ class FFGroceryTrackTest extends TestCase
         $newAdmin = User::where('email', 'newadmin@email.com')->first();
         $this->assertTrue($newAdmin->hasRole('Superadmin'));
     }
+
+    public function test_tracker_can_create_and_delete_items(): void
+    {
+        $tracker = User::factory()->create();
+        $tracker->assignRole('Tracker');
+
+        // Test create item
+        $responseCreate = $this->actingAs($tracker)->post('/inventori', [
+            'nama_item' => 'Tracker Milk',
+            'kategori' => 'Tenusu',
+            'jumlah_keseluruhan' => 5,
+            'jumlah_belum_dibuka' => 5,
+            'peratus_baki' => 100,
+            'had_ambang' => 2,
+        ]);
+        $responseCreate->assertRedirect('/inventori');
+        $this->assertDatabaseHas('inventori', ['nama_item' => 'Tracker Milk']);
+
+        $item = Inventori::where('nama_item', 'Tracker Milk')->first();
+
+        // Test delete item
+        $responseDelete = $this->actingAs($tracker)->delete('/inventori/' . $item->id);
+        $responseDelete->assertRedirect('/inventori');
+        $this->assertDatabaseMissing('inventori', ['id' => $item->id]);
+    }
+
+    public function test_tracker_cannot_access_tuntutan(): void
+    {
+        $tracker = User::factory()->create();
+        $tracker->assignRole('Tracker');
+
+        $response = $this->actingAs($tracker)->get('/tuntutan');
+        $response->assertStatus(403);
+    }
 }
