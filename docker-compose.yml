@@ -1,0 +1,52 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    image: ffgrocerytrack-app
+    container_name: ffgrocerytrack-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    networks:
+      - ffgrocerytrack-network
+
+  webserver:
+    image: nginx:alpine
+    container_name: ffgrocerytrack-webserver
+    restart: unless-stopped
+    ports:
+      - "8094:80"
+    volumes:
+      - .:/var/www
+      - ./.docker/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - ffgrocerytrack-network
+
+  db:
+    image: mysql:8.0
+    container_name: ffgrocerytrack-db
+    restart: unless-stopped
+    ports:
+      - "8095:3306"
+    environment:
+      MYSQL_DATABASE: ffgrocerytrack
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - ffgrocerytrack-network
+
+networks:
+  ffgrocerytrack-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local

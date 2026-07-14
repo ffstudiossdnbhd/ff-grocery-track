@@ -1,0 +1,109 @@
+@extends('layouts.app')
+
+@section('title', 'Tuntutan Pembelian')
+
+@section('content')
+<div class="page-header">
+    <div class="page-title">
+        <h1>Tuntutan Pembelian (Reimbursement)</h1>
+        <p>Lihat dan urus tuntutan mingguan bagi pembelian barangan groseri</p>
+    </div>
+    @role('Stocker')
+    <a href="{{ route('tuntutan.create') }}" class="btn btn-primary">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        <span>Hantar Tuntutan</span>
+    </a>
+    @endrole
+</div>
+
+@forelse($claimsGrouped as $week => $claims)
+    @php
+        // Kira jumlah nilai tuntutan untuk minggu ini
+        $totalWeek = $claims->sum('nilai_tuntutan');
+    @endphp
+    <div class="card" style="margin-bottom: 2rem; border: 1px solid rgba(99, 102, 241, 0.2);">
+        <div class="card-header-flex" style="border-bottom-color: rgba(99, 102, 241, 0.2);">
+            <div>
+                <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff;">
+                    Minggu: {{ $week }}
+                </h2>
+                <small style="color: var(--text-muted);">Format tahun dan nombor minggu ISO</small>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.85rem; color: var(--text-muted);">Jumlah Tuntutan Minggu Ini</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-success);">RM {{ number_format($totalWeek, 2) }}</div>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Pencadang</th>
+                        <th>Barang Pembelian</th>
+                        <th>Tarikh Beli</th>
+                        <th>Nilai Tuntutan</th>
+                        <th>Status</th>
+                        @role('Superadmin')
+                        <th style="text-align: right;">Tindakan Superadmin</th>
+                        @endrole
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($claims as $claim)
+                    <tr>
+                        <td>
+                            <strong>{{ $claim->user->name }}</strong>
+                            <div style="font-size: 0.75rem; color: var(--text-dark);">{{ $claim->user->email }}</div>
+                        </td>
+                        <td>{{ $claim->nama_item }}</td>
+                        <td>{{ $claim->tarikh_beli->format('d/m/Y') }}</td>
+                        <td><strong>RM {{ number_format($claim->nilai_tuntutan, 2) }}</strong></td>
+                        <td>
+                            @if($claim->status === 'Selesai')
+                                <span class="badge badge-success">Selesai (Dibayar)</span>
+                            @elseif($claim->status === 'Ditolak')
+                                <span class="badge badge-danger">Ditolak</span>
+                            @else
+                                <span class="badge badge-warning">Dalam Proses</span>
+                            @endif
+                        </td>
+                        @role('Superadmin')
+                        <td style="text-align: right;">
+                            @if($claim->status === 'Dalam Proses')
+                            <div style="display: inline-flex; gap: 8px;">
+                                <form action="{{ route('tuntutan.status', $claim->id) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="status" value="Selesai">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fa-solid fa-check"></i> Lulus
+                                    </button>
+                                </form>
+                                <form action="{{ route('tuntutan.status', $claim->id) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="status" value="Ditolak">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fa-solid fa-xmark"></i> Tolak
+                                    </button>
+                                </form>
+                            </div>
+                            @else
+                                <span style="font-size: 0.85rem; color: var(--text-dark);">Status Dikunci</span>
+                            @endif
+                        </td>
+                        @endrole
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+@empty
+    <div class="card" style="text-align: center; color: var(--text-muted); padding: 4rem;">
+        <i class="fa-solid fa-receipt" style="font-size: 4rem; color: var(--text-dark); margin-bottom: 1.5rem; display: block;"></i>
+        Tiada sebarang tuntutan pembayaran dijumpai.
+    </div>
+@endforelse
+@endsection
