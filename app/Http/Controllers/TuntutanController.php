@@ -56,15 +56,18 @@ class TuntutanController extends Controller
         }
 
         $validated = $request->validate([
-            'nama_item' => 'required|string|max:255',
+            'nama_item'      => 'required|string|max:255',
+            'tag'            => 'required|in:Stok,Lunch',
             'nilai_tuntutan' => 'required|numeric|min:0.01',
-            'tarikh_beli' => 'required|date|before_or_equal:today',
+            'tarikh_beli'    => 'required|date|before_or_equal:today',
         ], [
-            'nama_item.required' => 'Sila masukkan nama item yang dibeli.',
+            'nama_item.required'      => 'Sila masukkan nama item yang dibeli.',
+            'tag.required'            => 'Sila pilih jenis tuntutan (Stok atau Lunch).',
+            'tag.in'                  => 'Jenis tuntutan tidak sah.',
             'nilai_tuntutan.required' => 'Sila masukkan nilai tuntutan.',
-            'nilai_tuntutan.numeric' => 'Nilai tuntutan mestilah dalam bentuk nombor.',
-            'nilai_tuntutan.min' => 'Nilai tuntutan mestilah lebih daripada RM0.00.',
-            'tarikh_beli.required' => 'Sila masukkan tarikh pembelian.',
+            'nilai_tuntutan.numeric'  => 'Nilai tuntutan mestilah dalam bentuk nombor.',
+            'nilai_tuntutan.min'      => 'Nilai tuntutan mestilah lebih daripada RM0.00.',
+            'tarikh_beli.required'    => 'Sila masukkan tarikh pembelian.',
             'tarikh_beli.before_or_equal' => 'Tarikh pembelian tidak boleh pada masa hadapan.',
         ]);
 
@@ -81,9 +84,9 @@ class TuntutanController extends Controller
 
         // Log Aktiviti
         LogAktiviti::create([
-            'user_id' => Auth::id(),
-            'aktiviti' => "Membuat tuntutan baharu bagi pembelian: {$claim->nama_item} bernilai RM{$claim->nilai_tuntutan}.",
-            'item_id' => null,
+            'user_id'  => Auth::id(),
+            'aktiviti' => "Membuat tuntutan baharu bagi pembelian: {$claim->nama_item} [{$claim->tag}] bernilai RM{$claim->nilai_tuntutan}.",
+            'item_id'  => null,
             'data_baru' => $claim->toArray(),
         ]);
 

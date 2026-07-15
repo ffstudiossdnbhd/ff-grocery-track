@@ -50,6 +50,7 @@
                 <thead>
                     <tr>
                         <th>Pencadang</th>
+                        <th>Jenis</th>
                         <th>Barang Pembelian</th>
                         <th>Tarikh Beli</th>
                         <th>Nilai Tuntutan</th>
@@ -67,6 +68,19 @@
                                 <strong>{{ $claim->user->name }}</strong>
                                 <div style="font-size: 0.75rem; color: var(--text-dark);">{{ $claim->user->email }}</div>
                             </div>
+                        </td>
+                        <td data-label="Jenis">
+                            @if($claim->tag === 'Stok')
+                                <span class="badge badge-primary" style="display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fa-solid fa-boxes-stacked" style="font-size: 0.7rem;"></i> Stok
+                                </span>
+                            @elseif($claim->tag === 'Lunch')
+                                <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fa-solid fa-seedling" style="font-size: 0.7rem;"></i> Lunch
+                                </span>
+                            @else
+                                <span style="font-size: 0.8rem; color: var(--text-dark);">—</span>
+                            @endif
                         </td>
                         <td data-label="Barang Pembelian">{{ $claim->nama_item }}</td>
                         <td data-label="Tarikh Beli">{{ $claim->tarikh_beli->format('d/m/Y') }}</td>

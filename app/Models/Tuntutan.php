@@ -12,6 +12,7 @@ class Tuntutan extends Model
     protected $fillable = [
         'user_id',
         'nama_item',
+        'tag',
         'nilai_tuntutan',
         'tarikh_beli',
         'minggu_tuntutan',
