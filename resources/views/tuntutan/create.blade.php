@@ -111,38 +111,47 @@
         ══════════════════════════════════════ --}}
         <div id="section-lunch" class="mode-section" style="display: none;">
 
-            {{-- Pax + Harga table --}}
-            <div style="margin-bottom: 1.25rem;">
+            {{-- Week Selector Row --}}
+            <div class="form-row" style="margin-bottom: 1.25rem;">
+                <div class="form-group">
+                    <label class="form-label" style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.6rem; display: block;">
+                        <i class="fa-solid fa-calendar-week" style="color: var(--color-primary); margin-right: 6px;"></i>
+                        Pilih Minggu
+                    </label>
+                    <input type="week" id="lunch_week" name="week" class="form-control"
+                        value="{{ old('week', \Carbon\Carbon::now()->format('o-\WW')) }}" required>
+                </div>
+            </div>
+
+            {{-- Table with auto-filled dates --}}
+            <div style="margin-bottom: 1.5rem;">
                 <label class="form-label" style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.75rem; display: block;">
-                    <i class="fa-solid fa-users" style="color: var(--color-primary); margin-right: 6px;"></i>
-                    Butiran Lunch
+                    <i class="fa-solid fa-calendar-day" style="color: var(--color-primary); margin-right: 6px;"></i>
+                    Butiran Lunch Mengikut Hari
                 </label>
 
                 <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden;">
                     {{-- Header --}}
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; background: var(--bg-surface-hover); border-bottom: 1px solid var(--border-color); padding: 0.6rem 0.75rem; gap: 8px;">
-                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Bil. Pax</span>
-                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Harga / Pax (RM)</span>
+                    <div style="display: grid; grid-template-columns: 140px 1fr 90px 110px; background: var(--bg-surface-hover); border-bottom: 1px solid var(--border-color); padding: 0.6rem 0.75rem; gap: 12px;">
+                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Tarikh</span>
+                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Butiran Lunch</span>
+                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">Pax</span>
+                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">Harga/Pax</span>
                     </div>
 
-                    {{-- Single input row --}}
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0.4rem 0.75rem; align-items: center;">
-                        <input type="number" id="lunch_pax" min="1" placeholder="cth: 10"
-                            class="lunch-input" autocomplete="off">
-                        <input type="number" id="lunch_harga" step="0.01" min="0" placeholder="cth: 12.50"
-                            class="lunch-input" autocomplete="off">
-                    </div>
+                    {{-- Rows container --}}
+                    <div id="lunchDaysRows"></div>
                 </div>
                 <div id="lunchInputError" style="color: var(--color-danger); font-size: 0.8rem; margin-top: 6px; display: none;">
-                    Sila masukkan Bil. Pax dan Harga.
+                    Sila masukkan Bil. Pax dan Harga/Pax untuk hari yang ingin dituntut.
                 </div>
             </div>
 
-            {{-- Lunch: Jumlah (auto) + Tarikh --}}
-            <div class="form-row" style="align-items: flex-end;">
-                <div class="form-group">
-                    <label class="form-label" style="display: flex; align-items: center; gap: 6px;">
-                        Jumlah (RM)
+            {{-- Lunch: Jumlah (auto) --}}
+            <div class="form-row" style="align-items: flex-end; margin-bottom: 1rem;">
+                <div class="form-group" style="flex: 1;">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 6px; font-weight: 600;">
+                        Jumlah Tuntutan Minggu Ini (RM)
                         <span style="font-size: 0.75rem; color: var(--text-dark); font-weight: 400;">— dikira secara automatik</span>
                     </label>
                     <div style="position: relative;">
@@ -152,15 +161,9 @@
                             style="background: var(--bg-surface-hover); color: var(--color-success); font-weight: 700; font-size: 1.05rem; cursor: default; border-color: rgba(16,185,129,0.3); padding-left: 2.5rem;">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Tarikh</label>
-                    <input type="date" id="lunch_tarikh"
-                        class="form-control"
-                        value="{{ old('tarikh_beli', date('Y-m-d')) }}">
-                </div>
             </div>
             <div id="lunchBottomError" style="color: var(--color-danger); font-size: 0.8rem; margin-top: -0.5rem; margin-bottom: 0.75rem; display: none;">
-                Sila isi tarikh.
+                Sila isi minggu yang sah.
             </div>
         </div>
 
@@ -342,25 +345,140 @@
     // Initialise first row
     addRow(false);
 
-    /* ─── LUNCH: auto-calculate total ─── */
-    const paxInput   = document.getElementById('lunch_pax');
-    const hargaInput = document.getElementById('lunch_harga');
+    /* ─── LUNCH: weekly claim logic ─── */
+    const oldLunchData = {
+        dates: @json(old('lunch_dates', [])),
+        butirans: @json(old('lunch_butirans', [])),
+        pax: @json(old('lunch_pax', [])),
+        hargas: @json(old('lunch_hargas', []))
+    };
+
+    const weekInput  = document.getElementById('lunch_week');
     const totalDisp  = document.getElementById('lunch_total_display');
 
+    function getDatesFromISOWeek(weekStr) {
+        const parts = weekStr.split('-W');
+        if (parts.length !== 2) return [];
+        const year = parseInt(parts[0], 10);
+        const week = parseInt(parts[1], 10);
+        
+        // Start with Jan 4 (always in ISO week 1)
+        const d = new Date(year, 0, 4);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const mondayOfWeek1 = new Date(d.setDate(diff));
+        
+        const mondayOfTargetWeek = new Date(mondayOfWeek1.setDate(mondayOfWeek1.getDate() + (week - 1) * 7));
+        
+        const dates = [];
+        for (let i = 0; i < 7; i++) {
+            const temp = new Date(mondayOfTargetWeek);
+            temp.setDate(mondayOfTargetWeek.getDate() + i);
+            const yyyy = temp.getFullYear();
+            const mm = String(temp.getMonth() + 1).padStart(2, '0');
+            const dd = String(temp.getDate()).padStart(2, '0');
+            dates.push(`${yyyy}-${mm}-${dd}`);
+        }
+        return dates;
+    }
+
+    function formatDateDisplay(dateStr) {
+        const parts = dateStr.split('-');
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function escapeHtml(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     function calcLunchTotal() {
-        const pax   = parseFloat(paxInput.value)   || 0;
-        const harga = parseFloat(hargaInput.value) || 0;
-        const total = pax * harga;
+        let total = 0;
+        
+        document.querySelectorAll('.lunch-pax-input').forEach((paxInput) => {
+            const pax = parseInt(paxInput.value, 10) || 0;
+            const row = paxInput.closest('div').parentElement;
+            const hargaInput = row.querySelector('.lunch-harga-input');
+            const harga = parseFloat(hargaInput.value) || 0;
+            total += pax * harga;
+        });
+        
         totalDisp.value = total > 0 ? total.toFixed(2) : '0.00';
     }
 
-    paxInput.addEventListener('input', calcLunchTotal);
-    hargaInput.addEventListener('input', calcLunchTotal);
+    function renderLunchRows() {
+        const weekVal = weekInput.value;
+        const container = document.getElementById('lunchDaysRows');
+        container.innerHTML = '';
+        
+        if (!weekVal) {
+            container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">Sila pilih minggu di atas.</div>';
+            return;
+        }
+        
+        const dates = getDatesFromISOWeek(weekVal);
+        const dayNames = ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu', 'Ahad'];
+        
+        dates.forEach((dateStr, index) => {
+            let paxVal = '';
+            let butiranVal = 'Lunch Claim';
+            let hargaVal = '12.50'; // Default daily price
+            
+            // Check if we have old validation data for this index
+            if (oldLunchData.dates && oldLunchData.dates[index] === dateStr) {
+                paxVal = oldLunchData.pax[index] !== null ? oldLunchData.pax[index] : '';
+                butiranVal = oldLunchData.butirans[index] || 'Lunch Claim';
+                hargaVal = oldLunchData.hargas[index] !== null ? oldLunchData.hargas[index] : '12.50';
+            }
+            
+            const row = document.createElement('div');
+            row.style.display = 'grid';
+            row.style.gridTemplateColumns = '140px 1fr 90px 110px';
+            row.style.gap = '12px';
+            row.style.padding = '0.4rem 0.75rem';
+            row.style.alignItems = 'center';
+            row.style.borderBottom = index < 6 ? '1px solid var(--border-color)' : 'none';
+            
+            row.innerHTML = `
+                <div>
+                    <span style="font-size: 0.85rem; font-weight: 500; display: block; color: var(--text-main);">${dayNames[index]}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">${formatDateDisplay(dateStr)}</span>
+                    <input type="hidden" name="lunch_dates[]" value="${dateStr}">
+                </div>
+                <div>
+                    <input type="text" name="lunch_butirans[]" class="lunch-input" 
+                        value="${escapeHtml(butiranVal)}" placeholder="Butiran lunch..." autocomplete="off">
+                </div>
+                <div>
+                    <input type="number" name="lunch_pax[]" class="lunch-input lunch-pax-input" 
+                        value="${paxVal}" min="0" placeholder="0" autocomplete="off" style="text-align: right;">
+                </div>
+                <div>
+                    <input type="number" name="lunch_hargas[]" class="lunch-input lunch-harga-input" 
+                        value="${hargaVal}" step="0.01" min="0" placeholder="0.00" autocomplete="off" style="text-align: right;">
+                </div>
+            `;
+            container.appendChild(row);
+        });
+        
+        document.querySelectorAll('.lunch-pax-input').forEach(input => {
+            input.addEventListener('input', calcLunchTotal);
+        });
+        document.querySelectorAll('.lunch-harga-input').forEach(input => {
+            input.addEventListener('input', calcLunchTotal);
+        });
+        
+        calcLunchTotal();
+    }
 
-    // Enter on pax → focus harga
-    paxInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); hargaInput.focus(); }
-    });
+    weekInput.addEventListener('change', renderLunchRows);
+
+    // Initial render
+    renderLunchRows();
 
     /* ─── Form submit ─── */
     document.getElementById('tuntutanForm').addEventListener('submit', function(e) {
@@ -393,28 +511,100 @@
         }
 
         if (tag === 'Lunch') {
-            const pax    = parseFloat(paxInput.value)   || 0;
-            const harga  = parseFloat(hargaInput.value) || 0;
-            const tarikh = document.getElementById('lunch_tarikh').value.trim();
+            const week = weekInput.value;
+            const paxInputs = document.querySelectorAll('.lunch-pax-input');
             const inpErr = document.getElementById('lunchInputError');
             const botErr = document.getElementById('lunchBottomError');
-
+            
+            let totalPax = 0;
+            let missingButiran = false;
+            let missingHarga = false;
+            let totalClaimsAmount = 0;
+            
+            paxInputs.forEach((input) => {
+                const p = parseInt(input.value, 10) || 0;
+                totalPax += p;
+                
+                const row = input.closest('div').parentElement;
+                const butiranInput = row.querySelector('input[name="lunch_butirans[]"]');
+                const hargaInput = row.querySelector('input[name="lunch_hargas[]"]');
+                const price = parseFloat(hargaInput.value) || 0;
+                
+                butiranInput.style.borderColor = '';
+                hargaInput.style.borderColor = '';
+                
+                if (p > 0) {
+                    const butiran = butiranInput.value.trim();
+                    totalClaimsAmount += p * price;
+                    
+                    if (!butiran) {
+                        missingButiran = true;
+                        butiranInput.style.borderColor = 'var(--color-danger)';
+                    }
+                    if (price <= 0) {
+                        missingHarga = true;
+                        hargaInput.style.borderColor = 'var(--color-danger)';
+                    }
+                }
+            });
+            
             let stop = false;
-            if (pax <= 0 || harga <= 0) { e.preventDefault(); inpErr.style.display = 'block'; stop = true; }
-            else inpErr.style.display = 'none';
-
-            if (!tarikh) { e.preventDefault(); botErr.style.display = 'block'; stop = true; }
-            else botErr.style.display = 'none';
-
+            if (totalPax <= 0) {
+                e.preventDefault();
+                inpErr.innerText = 'Sila masukkan sekurang-kurangnya satu Bil. Pax untuk hari yang ingin dituntut.';
+                inpErr.style.display = 'block';
+                stop = true;
+            } else {
+                inpErr.style.display = 'none';
+            }
+            
+            if (!week) {
+                e.preventDefault();
+                botErr.innerText = 'Sila pilih minggu.';
+                botErr.style.display = 'block';
+                stop = true;
+            } else {
+                botErr.style.display = 'none';
+            }
+            
+            if (missingButiran) {
+                e.preventDefault();
+                inpErr.innerText = 'Sila isi butiran lunch untuk hari yang mempunyai pax.';
+                inpErr.style.display = 'block';
+                stop = true;
+            }
+            
+            if (missingHarga) {
+                e.preventDefault();
+                inpErr.innerText = 'Sila isi harga per pax yang sah untuk hari yang mempunyai pax.';
+                inpErr.style.display = 'block';
+                stop = true;
+            }
+            
             if (stop) return;
-
-            const total = (pax * harga).toFixed(2);
-            document.getElementById('nama_item_hidden').value      = `Lunch – ${pax} pax @ RM ${parseFloat(harga).toFixed(2)}/pax`;
-            document.getElementById('nilai_tuntutan_hidden').value = total;
-
+            
+            // Set values to satisfy dummy checks
+            document.getElementById('nama_item_hidden').value = `Lunch Claim - Minggu ${week}`;
+            document.getElementById('nilai_tuntutan_hidden').value = totalClaimsAmount.toFixed(2);
+            
+            let firstDate = '';
+            document.querySelectorAll('.lunch-pax-input').forEach((input) => {
+                const p = parseInt(input.value, 10) || 0;
+                if (p > 0 && !firstDate) {
+                    const row = input.closest('div').parentElement;
+                    firstDate = row.querySelector('input[name="lunch_dates[]"]').value;
+                }
+            });
+            
             let t = document.getElementById('_lunch_tarikh_submit');
-            if (!t) { t = document.createElement('input'); t.type='hidden'; t.name='tarikh_beli'; t.id='_lunch_tarikh_submit'; this.appendChild(t); }
-            t.value = tarikh;
+            if (!t) {
+                t = document.createElement('input');
+                t.type = 'hidden';
+                t.name = 'tarikh_beli';
+                t.id = '_lunch_tarikh_submit';
+                this.appendChild(t);
+            }
+            t.value = firstDate || new Date().toISOString().split('T')[0];
         }
     });
 </script>
