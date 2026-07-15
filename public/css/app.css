@@ -529,13 +529,12 @@ button, input, select, textarea {
     }
     
         .custom-table td::before {
-            content: attr(data-label);
-            font-weight: 600;
-            color: var(--text-muted);
-            text-align: left;
-            font-size: 0.85rem;
-            padding-right: 10px;
-        }
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-muted);
+        text-align: left;
+        font-size: 0.85rem;
+        padding-right: 10px;
     }
 }
 
