@@ -18,33 +18,33 @@
 
 <!-- Penapis dan Carian -->
 <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
-    <form action="{{ route('inventori.index') }}" method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-        <div style="flex-grow: 1; min-width: 250px;">
-            <input type="text" name="carian" class="form-control" placeholder="Cari nama barang..." value="{{ request('carian') }}">
+    <form action="{{ route('inventori.index') }}" method="GET" class="inventori-filter-form">
+        <div class="inventori-search-row">
+            <div class="inventori-search-input">
+                <input type="text" name="carian" class="form-control" placeholder="Cari nama barang..." value="{{ request('carian') }}">
+            </div>
+            <button type="submit" class="btn btn-secondary inventori-submit-btn">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span class="tapis-label">Tapis</span>
+            </button>
         </div>
-        <div style="width: 200px;">
+        <div class="inventori-filter-row">
             <select name="kategori" class="form-control">
                 <option value="">Semua Kategori</option>
                 @foreach($kategoriSenarai as $kat)
                     <option value="{{ $kat }}" {{ request('kategori') == $kat ? 'selected' : '' }}>{{ $kat }}</option>
                 @endforeach
             </select>
+            @if(request('carian') || request('kategori'))
+                <a href="{{ route('inventori.index') }}" class="btn btn-secondary" style="background: transparent; border: none; white-space: nowrap;">Set Semula</a>
+            @endif
         </div>
-        <button type="submit" class="btn btn-secondary">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <span>Tapis</span>
-        </button>
-        @if(request('carian') || request('kategori'))
-            <a href="{{ route('inventori.index') }}" class="btn btn-secondary" style="background: transparent; border: none;">
-                Set Semula
-            </a>
-        @endif
     </form>
 </div>
 
 <!-- Senarai Barang -->
-<div class="card" style="padding: 0;">
-    <div class="table-wrapper">
+<div class="card inventori-list-card" style="padding: 0;">
+    <div class="table-wrapper desktop-only-view">
         <table class="custom-table">
             <thead>
                 <tr>
@@ -136,6 +136,88 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <!-- View Mudah Alih / Mobile View -->
+    <div class="mobile-only-view">
+        @forelse($items as $item)
+        <div class="mobile-item-card">
+            <div class="mobile-card-header">
+                <div class="item-name-group">
+                    <span class="item-name">{{ $item->nama_item }}</span>
+                    <span class="badge badge-primary">{{ $item->kategori }}</span>
+                </div>
+                <div class="item-expiry">
+                    @if($item->jejak_luput && $item->tarikh_luput)
+                        @php
+                            $daysToExpiry = now()->startOfDay()->diffInDays($item->tarikh_luput->startOfDay(), false);
+                        @endphp
+                        @if($daysToExpiry < 0)
+                            <span class="badge badge-danger">Telah Luput</span>
+                        @elseif($daysToExpiry <= 3)
+                            <span class="badge badge-warning">Hampir Luput ({{ $daysToExpiry }}h)</span>
+                        @else
+                            <span class="expiry-date-text" style="font-size: 0.85rem; color: var(--text-muted);">EXP: {{ $item->tarikh_luput->format('d/m/Y') }}</span>
+                        @endif
+                    @else
+                        <span class="expiry-no-track" style="font-size: 0.8rem; color: var(--text-dark);">Tidak dijejak</span>
+                    @endif
+                </div>
+            </div>
+            
+            <div class="mobile-card-stats">
+                <div class="stat-box">
+                    <span class="stat-label">Jumlah</span>
+                    <span class="stat-val"><strong>{{ $item->jumlah_keseluruhan }}</strong> unit</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Belum Dibuka</span>
+                    <span class="stat-val">
+                        @if($item->jumlah_belum_dibuka == 0 && $item->jumlah_keseluruhan > 0)
+                            <span class="badge badge-danger" style="padding: 2px 6px; font-size: 0.7rem; font-weight: 500;">0 Unit</span>
+                        @else
+                            <strong>{{ $item->jumlah_belum_dibuka }}</strong> unit
+                        @endif
+                    </span>
+                </div>
+                <div class="stat-box baki-box">
+                    <span class="stat-label">Baki Dibuka</span>
+                    <div class="baki-progress-group">
+                        <span class="stat-val"><strong>{{ $item->peratus_baki }}%</strong></span>
+                        <div class="progress-bar-container mini">
+                            <div class="progress-bar-fill" style="width: {{ $item->peratus_baki }}%; background: {{ $item->peratus_baki <= 20 ? 'var(--color-danger)' : ($item->peratus_baki <= 50 ? 'var(--color-warning)' : 'var(--color-success)') }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mobile-card-actions">
+                <span class="created-at-text">Dicipta: {{ $item->created_at->format('d/m/Y') }}</span>
+                <div class="action-buttons">
+                    <button onclick="bukaModalPelarasan({{ json_encode($item) }})" class="btn btn-secondary btn-sm" title="Selaraskan Stok">
+                        <i class="fa-solid fa-sliders"></i>
+                    </button>
+                    <a href="{{ route('inventori.edit', $item->id) }}" class="btn btn-secondary btn-sm" title="Edit Barangan">
+                        <i class="fa-solid fa-pen"></i>
+                    </a>
+                    @hasanyrole('Superadmin|Stocker|Tracker')
+                    <form action="{{ route('inventori.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Adakah anda pasti mahu memadam item ini?')" style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-sm" title="Padam Barangan" style="background-color: transparent; color: var(--color-danger); border: 1px solid rgba(239, 68, 68, 0.2); padding: 6px 10px;">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </form>
+                    @endhasanyrole
+                </div>
+            </div>
+        </div>
+        @empty
+        <div class="mobile-empty-state">
+            <i class="fa-solid fa-box-open" style="font-size: 2.5rem; margin-bottom: 0.75rem; display: block; color: var(--text-dark);"></i>
+            Tiada rekod inventori dijumpai.
+        </div>
+        @endforelse
     </div>
     
     <div style="padding: 1.5rem;">
