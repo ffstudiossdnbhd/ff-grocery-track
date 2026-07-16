@@ -1,0 +1,47 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\ApiController;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+
+use App\Http\Middleware\AuthenticateApi;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
+
+// Laluan Terbuka (Public routes)
+Route::post('/login', [ApiController::class, 'login']);
+
+// Laluan Dilindungi (Authenticated API routes)
+Route::middleware([AuthenticateApi::class])->group(function () {
+    
+    Route::post('/logout', [ApiController::class, 'logout']);
+    Route::get('/user', [ApiController::class, 'user']);
+
+    // Ciri-ciri utama (Semua peranan boleh capai mengikut sekatan tertentu)
+    Route::get('/inventori', [ApiController::class, 'inventoriList']);
+    Route::get('/inventori/restok', [ApiController::class, 'restokList']);
+    
+    // Keizinan Tambah / Edit / Padam Inventori
+    Route::post('/inventori', [ApiController::class, 'inventoriStore']);
+    Route::put('/inventori/{inventori}', [ApiController::class, 'inventoriUpdate']);
+    Route::put('/inventori/{inventori}/adjust', [ApiController::class, 'inventoriAdjust']);
+    Route::delete('/inventori/{inventori}', [ApiController::class, 'inventoriDestroy']);
+
+    // Tuntutan (Reimbursement)
+    Route::get('/tuntutan', [ApiController::class, 'tuntutanList']);
+    Route::post('/tuntutan', [ApiController::class, 'tuntutanStore']);
+    Route::patch('/tuntutan/{tuntutan}/status', [ApiController::class, 'tuntutanUpdateStatus']);
+
+    // Khas untuk Superadmin sahaja
+    Route::get('/pengguna', [ApiController::class, 'penggunaList']);
+    Route::post('/pengguna', [ApiController::class, 'penggunaStore']);
+    Route::put('/pengguna/{user}', [ApiController::class, 'penggunaUpdate']);
+    Route::delete('/pengguna/{user}', [ApiController::class, 'penggunaDestroy']);
+    
+    Route::get('/log-aktiviti', [ApiController::class, 'logAktivitiList']);
+});

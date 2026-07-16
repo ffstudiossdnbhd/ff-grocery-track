@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InventoriController;
 use App\Http\Controllers\TuntutanController;
@@ -41,4 +42,16 @@ Route::middleware(['auth'])->group(function () {
         // Log Aktiviti Sistem
         Route::get('/log-aktiviti', [LogAktivitiController::class, 'index'])->name('log_aktiviti.index');
     });
+});
+
+// Temp route to clear caches
+Route::get('/clear-stuff', function () {
+    Artisan::call('config:clear');
+    Artisan::call('route:clear');
+    return 'Caches cleared successfully!';
+});
+// Temp route to run database migrations
+Route::get('/run-migration', function () {
+    Artisan::call('migrate');
+    return 'Database migrations completed successfully!';
 });
