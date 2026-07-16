@@ -14,7 +14,7 @@ class AuthenticateApi
      */
     public function handle(Request $request, Closure $next)
     {
-        $token = $request->bearerToken();
+        $token = $request->bearerToken() ?: $request->input('api_token') ?: $request->query('api_token');
         if (!$token) {
             return response()->json(['message' => 'Token tidak disediakan.'], 401);
         }
