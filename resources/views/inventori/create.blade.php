@@ -35,6 +35,32 @@
             </div>
         </div>
 
+        <div class="form-row-3col" style="margin-top: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="jenama" class="form-label">Jenama</label>
+                <input type="text" name="jenama" id="jenama" class="form-control @error('jenama') is-invalid @enderror" placeholder="Contoh: Nestlé, Gardenia" value="{{ old('jenama') }}">
+                @error('jenama')
+                    <div style="color: var(--color-danger); font-size: 0.8rem; margin-top: 4px;">{{ $message }}</div>
+                @enderror
+            </div>
+            
+            <div class="form-group">
+                <label for="jenis" class="form-label">Jenis/Varian</label>
+                <input type="text" name="jenis" id="jenis" class="form-control @error('jenis') is-invalid @enderror" placeholder="Contoh: Oreo biasa, Oreo Strawberry" value="{{ old('jenis') }}">
+                @error('jenis')
+                    <div style="color: var(--color-danger); font-size: 0.8rem; margin-top: 4px;">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="capacity" class="form-label">Capacity (ml/g/kg)</label>
+                <input type="text" name="capacity" id="capacity" class="form-control @error('capacity') is-invalid @enderror" placeholder="Contoh: 1L, 500g, 2kg" value="{{ old('capacity') }}">
+                @error('capacity')
+                    <div style="color: var(--color-danger); font-size: 0.8rem; margin-top: 4px;">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
         <div class="form-row">
             <div class="form-group">
                 <label for="jumlah_keseluruhan" class="form-label">Jumlah Keseluruhan (Unit)</label>

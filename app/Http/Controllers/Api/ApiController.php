@@ -141,6 +141,9 @@ class ApiController extends Controller
         $validated = $request->validate([
             'nama_item' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
+            'jenama' => 'nullable|string|max:255',
+            'jenis' => 'nullable|string|max:255',
+            'capacity' => 'nullable|string|max:255',
             'jumlah_keseluruhan' => 'required|integer|min:0',
             'jumlah_belum_dibuka' => 'required|integer|min:0|lte:jumlah_keseluruhan',
             'peratus_baki' => 'required|integer|between:0,100',
@@ -177,6 +180,9 @@ class ApiController extends Controller
         $validated = $request->validate([
             'nama_item' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
+            'jenama' => 'nullable|string|max:255',
+            'jenis' => 'nullable|string|max:255',
+            'capacity' => 'nullable|string|max:255',
             'jumlah_keseluruhan' => 'required|integer|min:0',
             'jumlah_belum_dibuka' => 'required|integer|min:0|lte:jumlah_keseluruhan',
             'peratus_baki' => 'required|integer|between:0,100',
@@ -194,11 +200,9 @@ class ApiController extends Controller
         $inventori->update($validated);
 
         if ($inventori->jumlah_belum_dibuka === 0 && $oldBelumDibuka > 0 && $inventori->jumlah_keseluruhan > 0) {
-            $this->notifyTelegram($inventori);
-
             LogAktiviti::create([
                 'user_id' => Auth::id(),
-                'aktiviti' => "Membuka unit terakhir belum dibuka untuk item: {$inventori->nama_item}. Amaran Telegram telah dihantar.",
+                'aktiviti' => "Membuka unit terakhir belum dibuka untuk item: {$inventori->nama_item}.",
                 'item_id' => $inventori->id,
                 'data_lama' => $oldData,
                 'data_baru' => $inventori->toArray(),
@@ -242,11 +246,9 @@ class ApiController extends Controller
         ]);
 
         if ($inventori->jumlah_belum_dibuka === 0 && $oldBelumDibuka > 0 && $inventori->jumlah_keseluruhan > 0) {
-            $this->notifyTelegram($inventori);
-
             LogAktiviti::create([
                 'user_id' => Auth::id(),
-                'aktiviti' => "Membuka unit terakhir belum dibuka untuk item: {$inventori->nama_item}. Amaran Telegram telah dihantar.",
+                'aktiviti' => "Membuka unit terakhir belum dibuka untuk item: {$inventori->nama_item}.",
                 'item_id' => $inventori->id,
                 'data_lama' => $oldData,
                 'data_baru' => $inventori->toArray(),
@@ -315,29 +317,37 @@ class ApiController extends Controller
         }
 
         $tag = $request->input('tag');
-        if (!in_array($tag, ['Stok', 'Lunch'])) {
+        if (!in_array($tag, ['Stok', 'Lunch', 'General', 'Food'])) {
             return response()->json(['message' => 'Jenis tuntutan tidak sah.'], 422);
         }
 
-        if ($tag === 'Stok') {
+        if ($tag === 'Stok' || $tag === 'General' || $tag === 'Food') {
             $request->validate([
                 'nama_item' => 'required|string|max:255',
+                'tag' => 'required|in:Stok,General,Food',
                 'nilai_tuntutan' => 'required|numeric|min:0.01',
                 'tarikh_beli' => 'required|date|before_or_equal:today',
+                'attachment' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
             ]);
 
             $date = Carbon::parse($request->tarikh_beli);
             $year = $date->format('o'); 
             $week = sprintf('%02d', $date->weekOfYear);
 
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                $attachmentPath = $request->file('attachment')->store('attachments', 'public');
+            }
+
             $claim = Tuntutan::create([
                 'nama_item' => $request->nama_item,
-                'tag' => 'Stok',
+                'tag' => $tag,
                 'nilai_tuntutan' => $request->nilai_tuntutan,
                 'tarikh_beli' => $request->tarikh_beli,
                 'minggu_tuntutan' => "{$year}-W{$week}",
                 'user_id' => Auth::id(),
                 'status' => 'Dalam Proses',
+                'attachment' => $attachmentPath,
             ]);
 
             LogAktiviti::create([
@@ -358,6 +368,7 @@ class ApiController extends Controller
                 'lunch_pax.*' => 'nullable|integer|min:0',
                 'lunch_hargas' => 'required|array|size:7',
                 'lunch_hargas.*' => 'nullable|numeric|min:0',
+                'attachment' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
             ]);
 
             $lunchDates = $request->input('lunch_dates');
@@ -366,13 +377,18 @@ class ApiController extends Controller
             $lunchHargas = $request->input('lunch_hargas');
             $week = $request->input('week');
 
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                $attachmentPath = $request->file('attachment')->store('attachments', 'public');
+            }
+
             $createdClaims = [];
 
             for ($i = 0; $i < 7; $i++) {
                 $pax = intval($lunchPaxes[$i] ?? 0);
                 if ($pax > 0) {
                     $butiran = trim($lunchButirans[$i] ?? 'Lunch Claim');
-                    $harga = floatval($lunchHargas[$i] ?? 12.50);
+                    $harga = floatval($lunchHargas[$i] ?? 5.00);
                     $nilai = $pax * $harga;
                     
                     $claim = Tuntutan::create([
@@ -383,6 +399,7 @@ class ApiController extends Controller
                         'tarikh_beli' => $lunchDates[$i],
                         'minggu_tuntutan' => $week,
                         'status' => 'Dalam Proses',
+                        'attachment' => $attachmentPath,
                     ]);
 
                     LogAktiviti::create([
@@ -606,41 +623,4 @@ class ApiController extends Controller
         return response()->json($logs);
     }
 
-    /**
-     * Hantar Notifikasi Telegram.
-     */
-    private function notifyTelegram(Inventori $item)
-    {
-        $token = env('TELEGRAM_BOT_TOKEN');
-        $chatId = env('TELEGRAM_CHAT_ID');
-
-        if (empty($token) || empty($chatId)) {
-            Log::warning('Token bot Telegram atau ID Sembang tidak dikonfigurasikan dalam fail .env');
-            return;
-        }
-
-        try {
-            $message = "🚨 *AMARAN RESTOK FFGroceryTrack* 🚨\n\n"
-                     . "Unit belum dibuka terakhir bagi item *{$item->nama_item}* telah dibuka!\n"
-                     . "Sila beli stok baharu untuk item ini secepat mungkin.\n\n"
-                     . "• *Kategori:* {$item->kategori}\n"
-                     . "• *Jumlah Baki Unit Keseluruhan:* {$item->jumlah_keseluruhan}\n"
-                     . "• *Had Ambang Restok:* {$item->had_ambang}\n\n"
-                     . "Sila lawati sistem untuk maklumat lanjut.";
-
-            $response = Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
-                'chat_id' => $chatId,
-                'text' => $message,
-                'parse_mode' => 'Markdown',
-            ]);
-
-            if ($response->failed()) {
-                Log::error('Telegram API error response: ' . $response->body());
-            } else {
-                Log::info("Telegram alert sent for item: {$item->nama_item}");
-            }
-        } catch (\Exception $e) {
-            Log::error('Gagal menghantar notifikasi Telegram: ' . $e->getMessage());
-        }
-    }
 }

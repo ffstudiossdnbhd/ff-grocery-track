@@ -63,6 +63,13 @@
                     <td data-label="Nama Item">
                         <div class="table-item-info">
                             <div style="font-weight: 600; font-size: 1rem; color: #fff;">{{ $item->nama_item }}</div>
+                            @if($item->jenama || $item->jenis || $item->capacity)
+                                <div style="font-size: 0.78rem; color: var(--text-dark); margin-top: 2px; margin-bottom: 2px;">
+                                    @if($item->jenama)<span>Jenama: <strong>{{ $item->jenama }}</strong></span>@endif
+                                    @if($item->jenis)<span> @if($item->jenama)|@endif Jenis/Varian: <strong>{{ $item->jenis }}</strong></span>@endif
+                                    @if($item->capacity)<span> @if($item->jenama || $item->jenis)|@endif Kapasiti: <strong>{{ $item->capacity }}</strong></span>@endif
+                                </div>
+                            @endif
                             <span style="font-size: 0.75rem; color: var(--text-dark);">Dicipta: {{ $item->created_at->format('d/m/Y') }}</span>
                         </div>
                     </td>

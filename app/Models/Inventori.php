@@ -12,6 +12,9 @@ class Inventori extends Model
     protected $fillable = [
         'nama_item',
         'kategori',
+        'jenama',
+        'jenis',
+        'capacity',
         'jumlah_keseluruhan',
         'jumlah_belum_dibuka',
         'peratus_baki',

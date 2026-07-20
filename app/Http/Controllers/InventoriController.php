@@ -77,6 +77,9 @@ class InventoriController extends Controller
         $validated = $request->validate([
             'nama_item' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
+            'jenama' => 'nullable|string|max:255',
+            'jenis' => 'nullable|string|max:255',
+            'capacity' => 'nullable|string|max:255',
             'jumlah_keseluruhan' => 'required|integer|min:0',
             'jumlah_belum_dibuka' => 'required|integer|min:0|lte:jumlah_keseluruhan',
             'peratus_baki' => 'required|integer|between:0,100',
@@ -135,6 +138,9 @@ class InventoriController extends Controller
         $validated = $request->validate([
             'nama_item' => 'required|string|max:255',
             'kategori' => 'required|string|max:255',
+            'jenama' => 'nullable|string|max:255',
+            'jenis' => 'nullable|string|max:255',
+            'capacity' => 'nullable|string|max:255',
             'jumlah_keseluruhan' => 'required|integer|min:0',
             'jumlah_belum_dibuka' => 'required|integer|min:0|lte:jumlah_keseluruhan',
             'peratus_baki' => 'required|integer|between:0,100',
@@ -159,14 +165,10 @@ class InventoriController extends Controller
 
         $inventori->update($validated);
 
-        // Semak trigger Telegram
-        // Jika baki belum dibuka mencapai 0 dari nilai > 0, manakala baki keseluruhan masih > 0
         if ($inventori->jumlah_belum_dibuka === 0 && $oldBelumDibuka > 0 && $inventori->jumlah_keseluruhan > 0) {
-            $this->notifyTelegram($inventori);
-
             LogAktiviti::create([
                 'user_id' => Auth::id(),
-                'aktiviti' => "Membuka unit terakhir belum dibuka untuk item: {$inventori->nama_item}. Amaran Telegram telah dihantar.",
+                'aktiviti' => "Membuka unit terakhir belum dibuka untuk item: {$inventori->nama_item}.",
                 'item_id' => $inventori->id,
                 'data_lama' => $oldData,
                 'data_baru' => $inventori->toArray(),
@@ -206,13 +208,10 @@ class InventoriController extends Controller
             'dikemaskini_oleh' => Auth::id(),
         ]);
 
-        // Semak trigger Telegram
         if ($inventori->jumlah_belum_dibuka === 0 && $oldBelumDibuka > 0 && $inventori->jumlah_keseluruhan > 0) {
-            $this->notifyTelegram($inventori);
-
             LogAktiviti::create([
                 'user_id' => Auth::id(),
-                'aktiviti' => "Membuka unit terakhir belum dibuka untuk item: {$inventori->nama_item}. Amaran Telegram telah dihantar.",
+                'aktiviti' => "Membuka unit terakhir belum dibuka untuk item: {$inventori->nama_item}.",
                 'item_id' => $inventori->id,
                 'data_lama' => $oldData,
                 'data_baru' => $inventori->toArray(),
@@ -256,41 +255,4 @@ class InventoriController extends Controller
         return redirect()->route('inventori.index')->with('success', 'Barang berjaya dipadam.');
     }
 
-    /**
-     * Hantar notifikasi Telegram ke group chat.
-     */
-    private function notifyTelegram(Inventori $item)
-    {
-        $token = env('TELEGRAM_BOT_TOKEN');
-        $chatId = env('TELEGRAM_CHAT_ID');
-
-        if (empty($token) || empty($chatId)) {
-            Log::warning('Token bot Telegram atau ID Sembang tidak dikonfigurasikan dalam fail .env');
-            return;
-        }
-
-        try {
-            $message = "🚨 *AMARAN RESTOK FFGroceryTrack* 🚨\n\n"
-                     . "Unit belum dibuka terakhir bagi item *{$item->nama_item}* telah dibuka!\n"
-                     . "Sila beli stok baharu untuk item ini secepat mungkin.\n\n"
-                     . "• *Kategori:* {$item->kategori}\n"
-                     . "• *Jumlah Baki Unit Keseluruhan:* {$item->jumlah_keseluruhan}\n"
-                     . "• *Had Ambang Restok:* {$item->had_ambang}\n\n"
-                     . "Sila lawati sistem untuk maklumat lanjut.";
-
-            $response = Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
-                'chat_id' => $chatId,
-                'text' => $message,
-                'parse_mode' => 'Markdown',
-            ]);
-
-            if ($response->failed()) {
-                Log::error('Telegram API error response: ' . $response->body());
-            } else {
-                Log::info("Telegram alert sent for item: {$item->nama_item}");
-            }
-        } catch (\Exception $e) {
-            Log::error('Gagal menghantar notifikasi Telegram: ' . $e->getMessage());
-        }
-    }
 }

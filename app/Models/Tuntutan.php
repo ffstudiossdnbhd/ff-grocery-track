@@ -17,6 +17,7 @@ class Tuntutan extends Model
         'tarikh_beli',
         'minggu_tuntutan',
         'status',
+        'attachment',
     ];
 
     protected $casts = [

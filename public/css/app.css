@@ -385,6 +385,12 @@ button, input, select, textarea {
     gap: 1.5rem;
 }
 
+.form-row-3col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+}
+
 /* Percentage Bar */
 .progress-bar-container {
     width: 100%;
@@ -471,7 +477,8 @@ button, input, select, textarea {
         display: flex;
     }
     
-    .form-row {
+    .form-row,
+    .form-row-3col {
         grid-template-columns: 1fr;
         gap: 0;
     }

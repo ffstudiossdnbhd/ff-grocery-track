@@ -56,16 +56,17 @@ class TuntutanController extends Controller
         }
 
         $tag = $request->input('tag');
-        if (!in_array($tag, ['Stok', 'Lunch'])) {
+        if (!in_array($tag, ['Stok', 'Lunch', 'General', 'Food'])) {
             return back()->withInput()->withErrors(['tag' => 'Jenis tuntutan tidak sah.']);
         }
 
-        if ($tag === 'Stok') {
+        if ($tag === 'Stok' || $tag === 'General' || $tag === 'Food') {
             $validated = $request->validate([
                 'nama_item'      => 'required|string|max:255',
-                'tag'            => 'required|in:Stok',
+                'tag'            => 'required|in:Stok,General,Food',
                 'nilai_tuntutan' => 'required|numeric|min:0.01',
                 'tarikh_beli'    => 'required|date|before_or_equal:today',
+                'attachment'     => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
             ], [
                 'nama_item.required'      => 'Sila masukkan nama item yang dibeli.',
                 'nilai_tuntutan.required' => 'Sila masukkan nilai tuntutan.',
@@ -73,6 +74,8 @@ class TuntutanController extends Controller
                 'nilai_tuntutan.min'      => 'Nilai tuntutan mestilah lebih daripada RM0.00.',
                 'tarikh_beli.required'    => 'Sila masukkan tarikh pembelian.',
                 'tarikh_beli.before_or_equal' => 'Tarikh pembelian tidak boleh pada masa hadapan.',
+                'attachment.mimes'        => 'Dokumen mestilah berformat JPEG, JPG, PNG atau PDF.',
+                'attachment.max'          => 'Saiz fail dokumen tidak boleh melebihi 5MB.',
             ]);
 
             // Hitung minggu tuntutan (Format: YYYY-Www)
@@ -83,6 +86,10 @@ class TuntutanController extends Controller
             $validated['minggu_tuntutan'] = "{$year}-W{$week}";
             $validated['user_id'] = Auth::id();
             $validated['status'] = 'Dalam Proses'; // Default status
+
+            if ($request->hasFile('attachment')) {
+                $validated['attachment'] = $request->file('attachment')->store('attachments', 'public');
+            }
 
             $claim = Tuntutan::create($validated);
 
@@ -104,9 +111,12 @@ class TuntutanController extends Controller
                 'lunch_pax.*'     => 'nullable|integer|min:0',
                 'lunch_hargas'    => 'required|array|size:7',
                 'lunch_hargas.*'  => 'nullable|numeric|min:0',
+                'attachment'      => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
             ], [
                 'week.required'       => 'Sila pilih minggu.',
                 'week.regex'          => 'Format minggu tidak sah.',
+                'attachment.mimes'    => 'Dokumen mestilah berformat JPEG, JPG, PNG atau PDF.',
+                'attachment.max'      => 'Saiz fail dokumen tidak boleh melebihi 5MB.',
             ]);
 
             $lunchDates = $request->input('lunch_dates');
@@ -160,6 +170,11 @@ class TuntutanController extends Controller
                 return back()->withInput()->withErrors(['lunch_hargas' => 'Sila masukkan harga per pax yang sah untuk hari yang dituntut.']);
             }
 
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                $attachmentPath = $request->file('attachment')->store('attachments', 'public');
+            }
+
             // Create claims
             for ($i = 0; $i < 7; $i++) {
                 $pax = intval($lunchPaxes[$i] ?? 0);
@@ -176,6 +191,7 @@ class TuntutanController extends Controller
                         'tarikh_beli'     => $lunchDates[$i],
                         'minggu_tuntutan' => $week,
                         'status'          => 'Dalam Proses',
+                        'attachment'      => $attachmentPath,
                     ]);
 
                     // Log Aktiviti

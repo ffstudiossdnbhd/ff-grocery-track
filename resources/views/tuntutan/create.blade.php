@@ -14,7 +14,7 @@
 </div>
 
 <div class="card" style="max-width: 720px;">
-    <form action="{{ route('tuntutan.store') }}" method="POST" id="tuntutanForm">
+    <form action="{{ route('tuntutan.store') }}" method="POST" id="tuntutanForm" enctype="multipart/form-data">
         @csrf
 
         {{-- Hidden fields submitted to backend --}}
@@ -34,6 +34,16 @@
                     <input type="radio" name="tag" value="Stok" {{ old('tag', '') === 'Stok' ? 'checked' : '' }} required>
                     <i class="fa-solid fa-boxes-stacked"></i>
                     <span>Stok</span>
+                </label>
+                <label class="tag-pill" id="pill-general">
+                    <input type="radio" name="tag" value="General" {{ old('tag', '') === 'General' ? 'checked' : '' }}>
+                    <i class="fa-solid fa-folder-open"></i>
+                    <span>General</span>
+                </label>
+                <label class="tag-pill" id="pill-food">
+                    <input type="radio" name="tag" value="Food" {{ old('tag', '') === 'Food' ? 'checked' : '' }}>
+                    <i class="fa-solid fa-bowl-food"></i>
+                    <span>Food</span>
                 </label>
                 <label class="tag-pill" id="pill-lunch">
                     <input type="radio" name="tag" value="Lunch" {{ old('tag', '') === 'Lunch' ? 'checked' : '' }}>
@@ -175,6 +185,19 @@
             <span style="font-size: 0.9rem;">Pilih jenis tuntutan di atas untuk mula mengisi borang.</span>
         </div>
 
+        {{-- Attachment field --}}
+        <div style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+            <label for="attachment" class="form-label" style="font-weight: 600; font-size: 0.95rem;">
+                <i class="fa-solid fa-paperclip" style="color: var(--color-primary); margin-right: 6px;"></i>
+                Muat Naik Resit / Dokumen Sokongan (Pilihan)
+            </label>
+            <input type="file" name="attachment" id="attachment" class="form-control @error('attachment') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf" style="background: var(--bg-surface-hover); color: var(--text-main); border: 1px dashed var(--border-color); padding: 0.6rem;">
+            <small style="color: var(--text-dark); display: block; margin-top: 4px;">Format yang dibenarkan: JPG, PNG, PDF (Maksimum 5MB)</small>
+            @error('attachment')
+                <div style="color: var(--color-danger); font-size: 0.8rem; margin-top: 4px;">{{ $message }}</div>
+            @enderror
+        </div>
+
         {{-- Action buttons --}}
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
             <a href="{{ route('tuntutan.index') }}" class="btn btn-secondary">Batal</a>
@@ -272,7 +295,7 @@
     function onTagChange() {
         const val = document.querySelector('input[name="tag"]:checked')?.value;
         document.getElementById('section-prompt').style.display = val ? 'none' : 'block';
-        document.getElementById('section-stok').style.display  = val === 'Stok'  ? 'block' : 'none';
+        document.getElementById('section-stok').style.display  = (val === 'Stok' || val === 'General' || val === 'Food')  ? 'block' : 'none';
         document.getElementById('section-lunch').style.display = val === 'Lunch' ? 'block' : 'none';
     }
 
@@ -426,13 +449,13 @@
         dates.forEach((dateStr, index) => {
             let paxVal = '';
             let butiranVal = 'Lunch Claim';
-            let hargaVal = '12.50'; // Default daily price
+            let hargaVal = '5.00'; // Default daily price
             
             // Check if we have old validation data for this index
             if (oldLunchData.dates && oldLunchData.dates[index] === dateStr) {
                 paxVal = oldLunchData.pax[index] !== null ? oldLunchData.pax[index] : '';
                 butiranVal = oldLunchData.butirans[index] || 'Lunch Claim';
-                hargaVal = oldLunchData.hargas[index] !== null ? oldLunchData.hargas[index] : '12.50';
+                hargaVal = oldLunchData.hargas[index] !== null ? oldLunchData.hargas[index] : '5.00';
             }
             
             const row = document.createElement('div');
@@ -486,7 +509,7 @@
 
         if (!tag) { e.preventDefault(); return; }
 
-        if (tag === 'Stok') {
+        if (tag === 'Stok' || tag === 'General' || tag === 'Food') {
             const { hasError, value } = serializeStokItems();
             const stokNilai  = document.getElementById('stok_nilai').value.trim();
             const stokTarikh = document.getElementById('stok_tarikh').value.trim();

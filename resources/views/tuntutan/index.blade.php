@@ -74,15 +74,32 @@
                                 <span class="badge badge-primary" style="display: inline-flex; align-items: center; gap: 4px;">
                                     <i class="fa-solid fa-boxes-stacked" style="font-size: 0.7rem;"></i> Stok
                                 </span>
+                            @elseif($claim->tag === 'General')
+                                <span class="badge" style="background: rgba(139, 92, 246, 0.15); color: #a78bfa; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fa-solid fa-folder-open" style="font-size: 0.7rem;"></i> General
+                                </span>
+                            @elseif($claim->tag === 'Food')
+                                <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fcd34d; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="fa-solid fa-bowl-food" style="font-size: 0.7rem;"></i> Food
+                                </span>
                             @elseif($claim->tag === 'Lunch')
                                 <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 4px;">
                                     <i class="fa-solid fa-seedling" style="font-size: 0.7rem;"></i> Lunch
                                 </span>
                             @else
-                                <span style="font-size: 0.8rem; color: var(--text-dark);">—</span>
+                                <span style="font-size: 0.8rem; color: var(--text-dark);">{{ $claim->tag }}</span>
                             @endif
                         </td>
-                        <td data-label="Barang Pembelian">{{ $claim->nama_item }}</td>
+                        <td data-label="Barang Pembelian">
+                            {{ $claim->nama_item }}
+                            @if($claim->attachment)
+                                <div style="margin-top: 4px;">
+                                    <a href="{{ asset('storage/' . $claim->attachment) }}" target="_blank" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: var(--text-main);">
+                                        <i class="fa-solid fa-paperclip" style="font-size: 0.7rem;"></i> Resit / Lampiran
+                                    </a>
+                                </div>
+                            @endif
+                        </td>
                         <td data-label="Tarikh Beli">{{ $claim->tarikh_beli->format('d/m/Y') }}</td>
                         <td data-label="Nilai Tuntutan"><strong>RM {{ number_format($claim->nilai_tuntutan, 2) }}</strong></td>
                         <td data-label="Status">

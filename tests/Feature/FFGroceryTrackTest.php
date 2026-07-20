@@ -266,4 +266,108 @@ class FFGroceryTrackTest extends TestCase
         ]);
         $response4->assertSessionHasErrors(['lunch_hargas']);
     }
+
+    public function test_stocker_can_submit_general_and_food_claim_with_attachment(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $stocker = User::factory()->create();
+        $stocker->assignRole('Stocker');
+
+        $file = \Illuminate\Http\UploadedFile::fake()->create('receipt.pdf', 100); // 100kb PDF
+
+        // 1. Test General claim
+        $responseGeneral = $this->actingAs($stocker)->post('/tuntutan', [
+            'tag' => 'General',
+            'nama_item' => 'Barang Pejabat A4 Paper',
+            'nilai_tuntutan' => 45.90,
+            'tarikh_beli' => '2026-07-20',
+            'attachment' => $file,
+        ]);
+
+        $responseGeneral->assertRedirect('/tuntutan');
+        $this->assertDatabaseHas('tuntutan', [
+            'user_id' => $stocker->id,
+            'tag' => 'General',
+            'nilai_tuntutan' => 45.90,
+            'nama_item' => 'Barang Pejabat A4 Paper',
+        ]);
+
+        $claimGeneral = Tuntutan::where('tag', 'General')->first();
+        $this->assertNotNull($claimGeneral->attachment);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($claimGeneral->attachment);
+
+        // 2. Test Food claim
+        $file2 = \Illuminate\Http\UploadedFile::fake()->create('food_receipt.png', 200); // 200kb Image
+        $responseFood = $this->actingAs($stocker)->post('/tuntutan', [
+            'tag' => 'Food',
+            'nama_item' => 'Katering Makan Malam',
+            'nilai_tuntutan' => 150.00,
+            'tarikh_beli' => '2026-07-20',
+            'attachment' => $file2,
+        ]);
+
+        $responseFood->assertRedirect('/tuntutan');
+        $this->assertDatabaseHas('tuntutan', [
+            'user_id' => $stocker->id,
+            'tag' => 'Food',
+            'nilai_tuntutan' => 150.00,
+            'nama_item' => 'Katering Makan Malam',
+        ]);
+
+        $claimFood = Tuntutan::where('tag', 'Food')->first();
+        $this->assertNotNull($claimFood->attachment);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($claimFood->attachment);
+    }
+
+    public function test_inventori_crud_with_brand_type_capacity(): void
+    {
+        $tracker = User::factory()->create();
+        $tracker->assignRole('Tracker');
+
+        // Test create
+        $responseCreate = $this->actingAs($tracker)->post('/inventori', [
+            'nama_item' => 'Susu Tepung',
+            'kategori' => 'Tenusu',
+            'jenama' => 'Fernleaf',
+            'jenis' => 'Serbuk',
+            'capacity' => '1.8kg',
+            'jumlah_keseluruhan' => 10,
+            'jumlah_belum_dibuka' => 8,
+            'peratus_baki' => 80,
+            'had_ambang' => 3,
+        ]);
+
+        $responseCreate->assertRedirect('/inventori');
+        $this->assertDatabaseHas('inventori', [
+            'nama_item' => 'Susu Tepung',
+            'jenama' => 'Fernleaf',
+            'jenis' => 'Serbuk',
+            'capacity' => '1.8kg',
+        ]);
+
+        $item = Inventori::first();
+
+        // Test update
+        $responseUpdate = $this->actingAs($tracker)->put('/inventori/' . $item->id, [
+            'nama_item' => 'Susu Tepung Pek Baru',
+            'kategori' => 'Tenusu',
+            'jenama' => 'Fernleaf Gold',
+            'jenis' => 'Serbuk',
+            'capacity' => '2kg',
+            'jumlah_keseluruhan' => 12,
+            'jumlah_belum_dibuka' => 9,
+            'peratus_baki' => 75,
+            'had_ambang' => 4,
+        ]);
+
+        $responseUpdate->assertRedirect('/inventori');
+        $this->assertDatabaseHas('inventori', [
+            'id' => $item->id,
+            'nama_item' => 'Susu Tepung Pek Baru',
+            'jenama' => 'Fernleaf Gold',
+            'jenis' => 'Serbuk',
+            'capacity' => '2kg',
+        ]);
+    }
 }
