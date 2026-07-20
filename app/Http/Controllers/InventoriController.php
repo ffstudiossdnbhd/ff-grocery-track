@@ -28,7 +28,7 @@ class InventoriController extends Controller
             $query->where('kategori', $request->kategori);
         }
 
-        $items = $query->orderBy('nama_item', 'asc')->paginate(15);
+        $items = $query->orderBy('nama_item', 'asc')->get();
         $kategoriSenarai = Inventori::distinct()->pluck('kategori');
 
         return view('inventori.index', compact('items', 'kategoriSenarai'));

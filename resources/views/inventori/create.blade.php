@@ -79,15 +79,9 @@
             </div>
         </div>
 
+        <input type="hidden" name="peratus_baki" value="100">
+        
         <div class="form-row">
-            <div class="form-group">
-                <label for="peratus_baki" class="form-label">Peratus Baki Item Dibuka (%)</label>
-                <input type="number" name="peratus_baki" id="peratus_baki" class="form-control @error('peratus_baki') is-invalid @enderror" min="0" max="100" value="{{ old('peratus_baki', 100) }}" required>
-                @error('peratus_baki')
-                    <div style="color: var(--color-danger); font-size: 0.8rem; margin-top: 4px;">{{ $message }}</div>
-                @enderror
-            </div>
-
             <div class="form-group">
                 <label for="had_ambang" class="form-label">Had Ambang Restok (Kuantiti Minimum)</label>
                 <input type="number" name="had_ambang" id="had_ambang" class="form-control @error('had_ambang') is-invalid @enderror" min="0" value="{{ old('had_ambang', 1) }}" required>
