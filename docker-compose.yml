@@ -29,7 +29,7 @@ services:
       - ffgrocerytrack-network
 
   db:
-    image: mysql:8.0
+    image: mariadb:11.8
     container_name: ffgrocerytrack-db
     restart: unless-stopped
     ports:
